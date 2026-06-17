@@ -39,7 +39,12 @@ export default function LoginScreen() {
     if (!isValid) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     setLoading(true);
-    await new Promise((r) => setTimeout(r, 800));
+    try {
+      const { sendOtp } = await import("@/services/api");
+      await sendOtp(value, mode as "phone" | "email");
+    } catch {
+      // Server unreachable — continue to OTP in demo mode
+    }
     setLoading(false);
     router.push({ pathname: "/auth/otp", params: { contact: value, mode } } as any);
   };
