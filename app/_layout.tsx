@@ -6,7 +6,7 @@ import {
   useFonts,
 } from "@expo-google-fonts/inter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { Redirect, Stack } from "expo-router";
+import { Stack, useRouter, useSegments } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import React, { useEffect } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
@@ -22,15 +22,24 @@ const queryClient = new QueryClient();
 
 function RootLayoutNav() {
   const app = useApp();
+  const router = useRouter();
+  const segments = useSegments();
 
-  // Route guard: onboarding → login → main tabs
-  // (defaults ensure we show onboarding before AsyncStorage hydration completes)
-  if (!app.hasSeenOnboarding) {
-    return <Redirect href="/onboarding" />;
-  }
-  if (!app.isAuthenticated) {
-    return <Redirect href="/auth/login" />;
-  }
+  useEffect(() => {
+    if (!app.loaded) return;
+
+    const inOnboarding = segments[0] === "onboarding";
+    const inAuth = segments[0] === "auth";
+    const inTabs = segments[0] === "(tabs)";
+
+    if (!app.hasSeenOnboarding && !inOnboarding) {
+      router.replace("/onboarding");
+    } else if (app.hasSeenOnboarding && !app.isAuthenticated && !inAuth) {
+      router.replace("/auth/login");
+    } else if (app.isAuthenticated && (inOnboarding || inAuth)) {
+      router.replace("/(tabs)");
+    }
+  }, [app.loaded, app.hasSeenOnboarding, app.isAuthenticated]);
 
   return (
     <Stack screenOptions={{ headerShown: false, animation: "slide_from_right" }}>
@@ -57,7 +66,6 @@ function FontLoader({ children }: { children: React.ReactNode }) {
     Inter_700Bold,
   });
 
-  // Hide splash screen immediately; fonts apply progressively once loaded
   useEffect(() => {
     SplashScreen.hideAsync().catch(() => {});
   }, []);
