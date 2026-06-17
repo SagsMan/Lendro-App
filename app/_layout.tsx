@@ -42,6 +42,7 @@ function RootLayoutNav() {
       <Stack.Screen name="services/electricity" options={{ headerShown: false }} />
       <Stack.Screen name="services/cable" options={{ headerShown: false }} />
       <Stack.Screen name="services/more" options={{ headerShown: false }} />
+      <Stack.Screen name="services/exam" options={{ headerShown: false }} />
       <Stack.Screen name="transactions" options={{ headerShown: false }} />
     </Stack>
   );
