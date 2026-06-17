@@ -8,7 +8,8 @@ import {
   import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
   import { Stack, usePathname, useRouter, useSegments } from "expo-router";
   import * as SplashScreen from "expo-splash-screen";
-  import React, { useEffect } from "react";
+  import React, { useCallback, useEffect, useState } from "react";
+  import { View } from "react-native";
   import { GestureHandlerRootView } from "react-native-gesture-handler";
   import { KeyboardProvider } from "react-native-keyboard-controller";
   import { SafeAreaProvider } from "react-native-safe-area-context";
@@ -20,7 +21,14 @@ import {
 
   SplashScreen.preventAutoHideAsync();
 
-  const queryClient = new QueryClient();
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: {
+        staleTime: 60_000,
+        retry: 1,
+      },
+    },
+  });
 
   function NavigationLoader() {
     const pathname = usePathname();
@@ -28,11 +36,7 @@ import {
     const isFirst = React.useRef(true);
 
     useEffect(() => {
-      // Skip the very first render (app boot)
-      if (isFirst.current) {
-        isFirst.current = false;
-        return;
-      }
+      if (isFirst.current) { isFirst.current = false; return; }
       showLoader(650);
     }, [pathname]);
 
@@ -46,10 +50,8 @@ import {
 
     useEffect(() => {
       if (!app.loaded) return;
-
       const inOnboarding = segments[0] === "onboarding";
       const inAuth = segments[0] === "auth";
-
       if (!app.hasSeenOnboarding && !inOnboarding) {
         router.replace("/onboarding");
       } else if (app.hasSeenOnboarding && !app.isAuthenticated && !inAuth) {
@@ -76,19 +78,26 @@ import {
     );
   }
 
-  function FontLoader({ children }: { children: React.ReactNode }) {
-    useFonts({
+  function AppShell() {
+    const [fontsLoaded] = useFonts({
       Inter_400Regular,
       Inter_500Medium,
       Inter_600SemiBold,
       Inter_700Bold,
     });
 
-    useEffect(() => {
-      SplashScreen.hideAsync().catch(() => {});
+    const onLayout = useCallback(async () => {
+      // Hide splash as soon as layout is ready — don't wait for fonts
+      await SplashScreen.hideAsync().catch(() => {});
     }, []);
 
-    return <>{children}</>;
+    return (
+      <View style={{ flex: 1 }} onLayout={onLayout}>
+        <NavigationLoader />
+        <RootLayoutNav />
+        <LoadingOverlay />
+      </View>
+    );
   }
 
   export default function RootLayout() {
@@ -100,11 +109,7 @@ import {
               <KeyboardProvider>
                 <LoadingProvider>
                   <AppProvider>
-                    <FontLoader>
-                      <NavigationLoader />
-                      <RootLayoutNav />
-                      <LoadingOverlay />
-                    </FontLoader>
+                    <AppShell />
                   </AppProvider>
                 </LoadingProvider>
               </KeyboardProvider>
