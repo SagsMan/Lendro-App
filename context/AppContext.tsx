@@ -232,13 +232,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           Api.getOrderStatus(id)
             .then((res) => {
               const apiStatus = res.transaction.status;
-              const mapped =
+              const mapped: "success" | "failed" | "pending" =
                 apiStatus === "success" ? "success" : apiStatus === "failed" || apiStatus === "reversed" ? "failed" : "pending";
               setState((p) => {
                 const updated = {
                   ...p,
                   transactions: p.transactions.map((tx) =>
-                    tx.id === id ? { ...tx, status: mapped as const } : tx
+                    tx.id === id ? { ...tx, status: mapped } : tx
                   ),
                 };
                 persist(updated);
