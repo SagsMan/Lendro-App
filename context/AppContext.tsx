@@ -9,7 +9,7 @@ import React, {
 
 export interface Transaction {
   id: string;
-  type: "airtime" | "data" | "electricity" | "cable" | "deposit" | "funding" | "more";
+  type: "airtime" | "data" | "electricity" | "cable" | "deposit" | "funding" | "exam" | "more";
   description: string;
   amount: number;
   status: "success" | "pending" | "failed";
