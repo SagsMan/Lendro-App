@@ -134,7 +134,7 @@ import { Feather, Ionicons } from "@expo/vector-icons";
               {/* Real app logo image */}
               <View style={styles.logoImgWrap}>
                 <Image
-                  source={require("../../../assets/images/icon.png")}
+                  source={require("../../assets/images/icon.png")}
                   style={styles.logoImg}
                   resizeMode="contain"
                 />
