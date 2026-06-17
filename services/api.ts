@@ -1,23 +1,45 @@
 /**
- * Lendro API Service Layer
- * Base URL: https://trackd.live/api/v1
- * Auth: Bearer token (stored after OTP verification)
+ * Lendro VTU API Service Layer
+ *
+ * Base URL  : https://trackd.live/lendro/api/v1
+ * Auth model: Bearer token (stored in memory + AsyncStorage after login)
+ * CORS      : server returns Access-Control-Allow-Origin: * + Allow-Credentials: true
  */
 
-const BASE_URL = "https://trackd.live/api/v1";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
+export const BASE_URL = "https://trackd.live/lendro/api/v1";
+
+// ─── Token management ──────────────────────────────────────────────────────────
+
+const TOKEN_STORAGE_KEY = "@lendro_api_token";
 let _token: string | null = null;
 
-export function setAuthToken(token: string) {
-  _token = token;
+export async function loadStoredToken(): Promise<string | null> {
+  if (_token) return _token;
+  const stored = await AsyncStorage.getItem(TOKEN_STORAGE_KEY);
+  if (stored) _token = stored;
+  return _token;
 }
 
-export function clearAuthToken() {
-  _token = null;
+export async function setAuthToken(token: string) {
+  _token = token;
+  await AsyncStorage.setItem(TOKEN_STORAGE_KEY, token);
 }
+
+export async function clearAuthToken() {
+  _token = null;
+  await AsyncStorage.removeItem(TOKEN_STORAGE_KEY);
+}
+
+export function getAuthToken() {
+  return _token;
+}
+
+// ─── Core fetch wrapper ────────────────────────────────────────────────────────
 
 async function request<T>(
-  method: "GET" | "POST" | "PUT" | "DELETE",
+  method: "GET" | "POST",
   path: string,
   body?: Record<string, unknown>
 ): Promise<T> {
@@ -25,308 +47,261 @@ async function request<T>(
     "Content-Type": "application/json",
     Accept: "application/json",
   };
-  if (_token) headers["Authorization"] = `Bearer ${_token}`;
+
+  // Attach bearer token if available
+  const tok = _token ?? (await AsyncStorage.getItem(TOKEN_STORAGE_KEY));
+  if (tok) headers["Authorization"] = `Bearer ${tok}`;
 
   const res = await fetch(`${BASE_URL}${path}`, {
     method,
+    credentials: "include",
     headers,
     body: body ? JSON.stringify(body) : undefined,
   });
 
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) {
-    throw new Error(data?.message ?? `HTTP ${res.status}`);
+  const data = await res.json().catch(() => ({
+    status: "failed",
+    message: `HTTP ${res.status}`,
+  }));
+
+  if (data?.status === "failed") {
+    throw new Error(
+      data.message ?? (data.errors as string[])?.join(", ") ?? `HTTP ${res.status}`
+    );
   }
   return data as T;
 }
 
-// ─── Auth ────────────────────────────────────────────────────────────────────
+// ─── Auth ─────────────────────────────────────────────────────────────────────
 
-export type SendOtpResponse = { message: string; expires_in: number };
-export type VerifyOtpResponse = { token: string; user: User };
-
-/** Send OTP to phone or email */
-export function sendOtp(contact: string, channel: "phone" | "email") {
-  return request<SendOtpResponse>("POST", "/auth/otp/send", { contact, channel });
-}
-
-/** Verify OTP — returns auth token */
-export function verifyOtp(contact: string, otp: string) {
-  return request<VerifyOtpResponse>("POST", "/auth/otp/verify", { contact, otp });
-}
-
-/** Register a new user (called after first OTP verify if user is new) */
-export function register(params: { name: string; phone: string; email?: string }) {
-  return request<VerifyOtpResponse>("POST", "/auth/register", params);
-}
-
-/** Logout — invalidates server session */
-export function logout() {
-  return request<{ message: string }>("POST", "/auth/logout");
-}
-
-// ─── User / Profile ──────────────────────────────────────────────────────────
-
-export type User = {
+export interface AuthUser {
   id: number;
   name: string;
+  email: string;
   phone: string;
-  email: string | null;
   wallet_balance: number;
-  oshare_balance: number;
-  support_funding_limit: number;
-  outstanding: number;
-  participation_points: number;
-  usage_points: number;
-  repayment_score: number;
-  total_points_earned: number;
-  rank: number;
-};
-
-export function getProfile() {
-  return request<User>("GET", "/user/profile");
 }
 
-export function updateProfile(params: { name?: string; email?: string }) {
-  return request<User>("PUT", "/user/profile", params);
-}
-
-// ─── Wallet ──────────────────────────────────────────────────────────────────
-
-export type WalletBalance = { balance: number; oshare_balance: number };
-
-export function getWalletBalance() {
-  return request<WalletBalance>("GET", "/wallet/balance");
-}
-
-export type DepositPayload = { amount: number; payment_method: "paystack" | "flutterwave" };
-export type DepositResponse = { payment_url: string; reference: string };
-
-export function initiateDeposit(payload: DepositPayload) {
-  return request<DepositResponse>("POST", "/wallet/deposit", payload);
-}
-
-export function verifyDeposit(reference: string) {
-  return request<{ success: boolean; amount: number }>("POST", "/wallet/deposit/verify", { reference });
-}
-
-// ─── Transactions ─────────────────────────────────────────────────────────────
-
-export type Transaction = {
-  id: number;
-  type: "airtime" | "data" | "cable" | "electricity" | "exam" | "deposit" | "withdrawal";
-  description: string;
-  amount: number;
-  status: "success" | "pending" | "failed";
-  created_at: string;
-  phone?: string;
-  network?: string;
-  reference?: string;
-};
-
-export type TransactionsResponse = {
-  data: Transaction[];
-  total: number;
-  page: number;
-  per_page: number;
-};
-
-export function getTransactions(params?: { page?: number; type?: string; status?: string }) {
-  const qs = new URLSearchParams(params as Record<string, string>).toString();
-  return request<TransactionsResponse>("GET", `/transactions${qs ? `?${qs}` : ""}`);
-}
-
-export function retryTransaction(id: number) {
-  return request<{ success: boolean; message: string }>("POST", `/transactions/${id}/retry`);
-}
-
-// ─── Airtime ─────────────────────────────────────────────────────────────────
-
-export type AirtimePurchasePayload = {
-  network: "mtn" | "airtel" | "glo" | "9mobile";
-  phone: string;
-  amount: number;
-};
-
-export type ServicePurchaseResponse = {
-  success: boolean;
+export interface LoginResponse {
+  status: "success";
   message: string;
-  reference: string;
-  transaction_id: number;
-  points_earned: number;
-};
-
-export function purchaseAirtime(payload: AirtimePurchasePayload) {
-  return request<ServicePurchaseResponse>("POST", "/services/airtime", payload);
+  token: string;
+  user: AuthUser;
 }
 
-// ─── Data ────────────────────────────────────────────────────────────────────
-
-export type DataPlan = {
-  id: string;
-  network: string;
-  size: string;
-  price: number;
-  validity: string;
-  description: string;
-  cashback_points: number;
-};
-
-export function getDataPlans(network: string) {
-  return request<DataPlan[]>("GET", `/services/data/plans?network=${network}`);
+/**
+ * POST /auth/login.php — email + password → returns Bearer token + user profile.
+ * Call setAuthToken(res.token) after this to persist the session.
+ */
+export async function login(email: string, password: string): Promise<LoginResponse> {
+  const res = await request<LoginResponse>("POST", "/auth/login.php", {
+    email,
+    password,
+  });
+  if (res.token) await setAuthToken(res.token);
+  return res;
 }
 
-export type DataPurchasePayload = {
-  network: "mtn" | "airtel" | "glo" | "9mobile";
-  phone: string;
-  plan_id: string;
-};
-
-export function purchaseData(payload: DataPurchasePayload) {
-  return request<ServicePurchaseResponse>("POST", "/services/data", payload);
+export interface RegisterResponse {
+  status: "success";
+  message: string;
+  user_id: number;
 }
 
-// ─── Cable TV ────────────────────────────────────────────────────────────────
-
-export type CablePlan = {
-  id: string;
-  provider: string;
-  name: string;
-  price: number;
-  duration: string;
-  channels: string;
-};
-
-export function getCablePlans(provider: string) {
-  return request<CablePlan[]>("GET", `/services/cable/plans?provider=${provider}`);
-}
-
-export type CableSubscribePayload = {
-  provider: "dstv" | "gotv" | "startimes" | "showmax";
-  smart_card_number: string;
-  plan_id: string;
-};
-
-export function subscribeCable(payload: CableSubscribePayload) {
-  return request<ServicePurchaseResponse>("POST", "/services/cable", payload);
-}
-
-// ─── Electricity ──────────────────────────────────────────────────────────────
-
-export type ElectricityDisco = {
-  id: string;
-  name: string;
-  slug: string;
-  states: string[];
-};
-
-export function getDiscos() {
-  return request<ElectricityDisco[]>("GET", "/services/electricity/discos");
-}
-
-export function validateMeter(disco: string, meter_number: string, meter_type: "prepaid" | "postpaid") {
-  return request<{ name: string; address: string; tariff: string }>("POST", "/services/electricity/validate", {
-    disco,
-    meter_number,
-    meter_type,
+/**
+ * POST /auth/register.php — create a new user account.
+ * On success, call login() immediately to get a token.
+ */
+export function register(
+  name: string,
+  email: string,
+  phone: string,
+  password: string
+): Promise<RegisterResponse> {
+  return request<RegisterResponse>("POST", "/auth/register.php", {
+    name,
+    email,
+    phone,
+    password,
   });
 }
 
-export type ElectricityPayload = {
-  disco: string;
-  meter_number: string;
-  meter_type: "prepaid" | "postpaid";
+/** POST /auth/logout.php — invalidates session + clears stored token. */
+export async function logout() {
+  const res = await request<{ status: "success"; message: string }>(
+    "POST",
+    "/auth/logout.php"
+  );
+  await clearAuthToken();
+  return res;
+}
+
+// ─── Wallet ───────────────────────────────────────────────────────────────────
+
+export interface WalletTransaction {
+  reference: string;
+  amount: number;
+  type: string;
+  service: string;
+  status:
+    | "pending"
+    | "processing"
+    | "success"
+    | "failed"
+    | "reversed"
+    | "awaiting_reconciliation";
+  date: string;
+  time_ago: string;
+}
+
+export interface WalletResponse {
+  status: "success";
+  balance: number;
+  transactions: WalletTransaction[];
+}
+
+/** GET /client/wallet.php — current balance + last 20 transactions. */
+export function getWallet(): Promise<WalletResponse> {
+  return request<WalletResponse>("GET", "/client/wallet.php");
+}
+
+// ─── Service Catalogue ────────────────────────────────────────────────────────
+
+export interface ServiceItem {
+  id: number;
+  key: string;
+  name: string;
+  price: number | null;
+  category: string;
+  duration: string | null;
+  unit: string | null;
+}
+
+export interface ServicesResponse {
+  status: "success";
+  data: {
+    airtime?: Record<string, ServiceItem[]>;
+    data?: Record<string, ServiceItem[]>;
+    bill?: Record<string, ServiceItem[]>;
+    [key: string]: Record<string, ServiceItem[]> | undefined;
+  };
+}
+
+/**
+ * GET /client/services.php — full service catalogue grouped by type + network.
+ * Use optional `type` and `network` params to filter results.
+ */
+export function getServices(
+  type?: string,
+  network?: string
+): Promise<ServicesResponse> {
+  const qs = new URLSearchParams();
+  if (type) qs.set("type", type);
+  if (network) qs.set("network", network);
+  const query = qs.toString() ? `?${qs}` : "";
+  return request<ServicesResponse>("GET", `/client/services.php${query}`);
+}
+
+// ─── Place Order ──────────────────────────────────────────────────────────────
+
+export interface OrderResponse {
+  status: "processing" | "already_processed" | "failed" | "success";
+  reference: string;
+  message: string;
+}
+
+/**
+ * POST /client/order.php — place a VTU purchase.
+ *
+ * Wallet is debited immediately; provider API is called asynchronously
+ * by the background worker. Use getOrderStatus(reference) to poll.
+ *
+ * @param service_id      Service ID from the catalogue (getServices())
+ * @param phone           Recipient's phone number (e.g. "08012345678")
+ * @param idempotency_key Client-generated UUID to prevent duplicate charges
+ */
+export function placeOrder(
+  service_id: number,
+  phone: string,
+  idempotency_key: string
+): Promise<OrderResponse> {
+  return request<OrderResponse>("POST", "/client/order.php", {
+    service_id,
+    phone,
+    idempotency_key,
+  });
+}
+
+/**
+ * Generate a UUID-based idempotency key.
+ * Always generate a new one per purchase attempt — never reuse across sessions.
+ */
+export function generateIdempotencyKey(): string {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID();
+  }
+  return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+}
+
+// ─── Transaction Status ───────────────────────────────────────────────────────
+
+export interface StatusResponse {
+  status: "success";
+  transaction: {
+    reference: string;
+    status: "pending" | "processing" | "success" | "failed" | "reversed";
+    service: string;
+    amount: number;
+    phone: string;
+    created_at: string;
+    updated_at: string;
+  };
+}
+
+/** GET /client/status.php?ref= — poll a single order's status by reference. */
+export function getOrderStatus(reference: string): Promise<StatusResponse> {
+  return request<StatusResponse>(
+    "GET",
+    `/client/status.php?ref=${encodeURIComponent(reference)}`
+  );
+}
+
+// ─── Transaction History ──────────────────────────────────────────────────────
+
+export interface TransactionRecord {
+  reference: string;
+  service: string;
+  provider: string;
   amount: number;
   phone: string;
-};
-
-export function payElectricity(payload: ElectricityPayload) {
-  return request<ServicePurchaseResponse & { token?: string }>("POST", "/services/electricity", payload);
-}
-
-// ─── Exam PIN ─────────────────────────────────────────────────────────────────
-
-export type ExamBody = { id: string; name: string; slug: string };
-
-export type ExamPinType = {
-  id: string;
-  body: string;
-  name: string;
-  price: number;
-  description: string;
-};
-
-export function getExamBodies() {
-  return request<ExamBody[]>("GET", "/services/exam/bodies");
-}
-
-export function getExamPinTypes(body: string) {
-  return request<ExamPinType[]>("GET", `/services/exam/pin-types?body=${body}`);
-}
-
-export type ExamPinPayload = {
-  body: "waec" | "neco" | "jamb" | "nabteb";
-  pin_type_id: string;
-  reg_number: string;
-};
-
-export type ExamPinResponse = ServicePurchaseResponse & { pin: string; serial?: string };
-
-export function purchaseExamPin(payload: ExamPinPayload) {
-  return request<ExamPinResponse>("POST", "/services/exam/pin", payload);
-}
-
-// ─── Support Funding ──────────────────────────────────────────────────────────
-
-export type FundingRequest = {
-  amount: number;
-  purpose: string;
-  repayment_plan: "weekly" | "monthly";
-};
-
-export type FundingResponse = {
-  id: number;
-  status: "pending" | "approved" | "rejected";
-  amount: number;
-  message: string;
-};
-
-export function requestFunding(payload: FundingRequest) {
-  return request<FundingResponse>("POST", "/funding/request", payload);
-}
-
-export function getFundingHistory() {
-  return request<FundingResponse[]>("GET", "/funding/history");
-}
-
-// ─── Leaderboard ──────────────────────────────────────────────────────────────
-
-export type LeaderboardEntry = {
-  rank: number;
-  user_id: number;
-  name: string;
-  usage_points: number;
-  is_current_user: boolean;
-};
-
-export function getLeaderboard() {
-  return request<LeaderboardEntry[]>("GET", "/leaderboard");
-}
-
-// ─── Notifications ────────────────────────────────────────────────────────────
-
-export type Notification = {
-  id: number;
-  title: string;
-  body: string;
-  read: boolean;
+  status: string;
   created_at: string;
-};
-
-export function getNotifications() {
-  return request<Notification[]>("GET", "/notifications");
+  updated_at: string;
+  time_ago: string;
 }
 
-export function markNotificationRead(id: number) {
-  return request<{ success: boolean }>("POST", `/notifications/${id}/read`);
+export interface TransactionsListResponse {
+  status: "success";
+  page: number;
+  limit: number;
+  total: number;
+  total_pages: number;
+  transactions: TransactionRecord[];
+}
+
+/** GET /client/transactions.php — paginated full transaction history. */
+export function getTransactions(
+  page = 1,
+  limit = 20,
+  status?: string
+): Promise<TransactionsListResponse> {
+  const qs = new URLSearchParams({
+    page: String(page),
+    limit: String(limit),
+  });
+  if (status) qs.set("status", status);
+  return request<TransactionsListResponse>(
+    "GET",
+    `/client/transactions.php?${qs}`
+  );
 }
