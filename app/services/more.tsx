@@ -20,7 +20,7 @@ const ALL_SERVICES = [
   { id: "data", label: "Mobile Data", icon: "wifi", color: "#3B82F6", bg: "#EFF6FF", desc: "Data bundles", route: "/services/data" },
   { id: "cable", label: "Cable TV", icon: "tv", color: "#8B5CF6", bg: "#F5F3FF", desc: "DSTV, GOtv, StarTimes", route: "/services/cable" },
   { id: "electricity", label: "Electricity", icon: "zap", color: "#F59E0B", bg: "#FFFBEB", desc: "Prepaid/Postpaid", route: "/services/electricity" },
-  { id: "exam", label: "Exam Pin", icon: "file-text", color: "#10B981", bg: "#ECFDF5", desc: "JAMB, WAEC, NECO" },
+  { id: "exam", label: "Exam Pin", icon: "file-text", color: "#10B981", bg: "#ECFDF5", desc: "JAMB, WAEC, NECO", route: "/services/exam" },
   { id: "internet", label: "Internet", icon: "globe", color: "#06B6D4", bg: "#ECFEFF", desc: "Broadband & fiber" },
   { id: "insurance", label: "Insurance", icon: "shield", color: "#6366F1", bg: "#EEF2FF", desc: "Health & auto" },
   { id: "betting", label: "Betting", icon: "trending-up", color: "#F97316", bg: "#FFF7ED", desc: "Bet9ja, Sportybet" },
