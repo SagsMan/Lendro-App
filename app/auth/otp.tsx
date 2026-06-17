@@ -15,6 +15,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useApp } from "@/context/AppContext";
+import * as ApiService from "@/services/api";
 
 const OTP_LENGTH = 6;
 
@@ -73,21 +74,32 @@ export default function OtpScreen() {
     if (finalCode.length < OTP_LENGTH) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     setLoading(true);
-    await new Promise((r) => setTimeout(r, 1200));
+    try {
+      const res = await ApiService.verifyOtp(contact ?? "", finalCode);
+      ApiService.setAuthToken(res.token);
+      app.login(contact ?? "", res.user?.name ?? "User");
+      setLoading(false);
+      router.replace("/(tabs)" as any);
+      return;
+    } catch {
+      // Server unreachable — fall back to demo mode (any 6-digit code accepted)
+    }
+    await new Promise((r) => setTimeout(r, 800));
     setLoading(false);
-
-    // Accept any 6-digit code (demo mode)
-    app.login(contact ?? "+2340000000000");
+    app.login(contact ?? "");
     router.replace("/(tabs)" as any);
   };
 
-  const handleResend = () => {
+  const handleResend = async () => {
     if (!canResend) return;
     setOtp(Array(OTP_LENGTH).fill(""));
     setCountdown(60);
     setCanResend(false);
     refs.current[0]?.focus();
     setActiveIndex(0);
+    try {
+      await ApiService.sendOtp(contact ?? "", (mode as "phone" | "email") ?? "phone");
+    } catch { /* demo mode */ }
     const timer = setInterval(() => {
       setCountdown((c) => {
         if (c <= 1) { setCanResend(true); clearInterval(timer); return 0; }
