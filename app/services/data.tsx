@@ -5,6 +5,7 @@ import React, { useState } from "react";
 import {
   Alert,
   FlatList,
+  Image,
   Platform,
   ScrollView,
   StyleSheet,
@@ -19,10 +20,10 @@ import { useApp } from "@/context/AppContext";
 import { useColors } from "@/hooks/useColors";
 
 const NETWORKS = [
-  { id: "mtn", label: "MTN", color: "#FFCC00", abbr: "M", textColor: "#1A1A2E" },
-  { id: "airtel", label: "Airtel", color: "#E30000", abbr: "A", textColor: "#FFFFFF" },
-  { id: "glo", label: "GLO", color: "#00B140", abbr: "G", textColor: "#FFFFFF" },
-  { id: "9mobile", label: "9mobile", color: "#006633", abbr: "9", textColor: "#FFFFFF" },
+  { id: "mtn", label: "MTN", color: "#FFCC00", logo: require("@/assets/images/logos/mtn.png") },
+  { id: "airtel", label: "Airtel", color: "#E30000", logo: require("@/assets/images/logos/airtel.png") },
+  { id: "glo", label: "GLO", color: "#00B140", logo: require("@/assets/images/logos/glo.png") },
+  { id: "9mobile", label: "9mobile", color: "#006633", logo: require("@/assets/images/logos/9mobile.png") },
 ];
 
 type PlanTab = "hot" | "daily" | "weekly" | "monthly";
@@ -130,8 +131,8 @@ export default function DataScreen() {
               style={[styles.netSelector, { borderRightColor: colors.border }]}
               onPress={() => {}}
             >
-              <View style={[styles.netCircle, { backgroundColor: net.color }]}>
-                <Text style={[styles.netAbbr, { color: net.textColor }]}>{net.abbr}</Text>
+              <View style={styles.netCircle}>
+                <Image source={net.logo} style={styles.netCircleImg} resizeMode="cover" />
               </View>
               <Feather name="chevron-down" size={16} color={colors.mutedForeground} />
             </TouchableOpacity>
@@ -163,11 +164,11 @@ export default function DataScreen() {
             {NETWORKS.map((n) => (
               <TouchableOpacity
                 key={n.id}
-                style={[styles.netBtn, { borderColor: network === n.id ? n.color : colors.border }, network === n.id && { borderWidth: 2 }]}
+                style={[styles.netBtn, { borderColor: network === n.id ? n.color : colors.border }, network === n.id && { borderWidth: 2, backgroundColor: n.color + "12" }]}
                 onPress={() => { setNetwork(n.id); setSelected(null); Haptics.selectionAsync(); }}
               >
-                <View style={[styles.netBtnCircle, { backgroundColor: n.color }]}>
-                  <Text style={[styles.netAbbr, { color: n.textColor }]}>{n.abbr}</Text>
+                <View style={styles.netBtnCircle}>
+                  <Image source={n.logo} style={styles.netBtnImg} resizeMode="cover" />
                 </View>
                 <Text style={[styles.netBtnLabel, { color: colors.foreground }]}>{n.label}</Text>
               </TouchableOpacity>
@@ -247,8 +248,8 @@ const styles = StyleSheet.create({
   bannerText: { fontSize: 13, fontFamily: "Inter_500Medium", textAlign: "center" },
   phoneRow: { flexDirection: "row", alignItems: "center", borderWidth: 1.5, borderRadius: 12, marginBottom: 4, overflow: "hidden" },
   netSelector: { flexDirection: "row", alignItems: "center", paddingHorizontal: 12, paddingVertical: 14, gap: 8, borderRightWidth: 1 },
-  netCircle: { width: 32, height: 32, borderRadius: 16, alignItems: "center", justifyContent: "center" },
-  netAbbr: { fontSize: 14, fontFamily: "Inter_700Bold" },
+  netCircle: { width: 32, height: 32, borderRadius: 16, overflow: "hidden" },
+  netCircleImg: { width: "100%", height: "100%" },
   phoneInput: { flex: 1, fontSize: 16, fontFamily: "Inter_500Medium", paddingHorizontal: 12, paddingVertical: 14 },
   phoneCount: { fontSize: 11, fontFamily: "Inter_400Regular", textAlign: "right", marginBottom: 16 },
   benefRow: { flexDirection: "row", alignItems: "center", gap: 10, padding: 14, borderRadius: 10, borderWidth: 1, marginBottom: 20 },
@@ -256,7 +257,8 @@ const styles = StyleSheet.create({
   label: { fontSize: 14, fontFamily: "Inter_500Medium", marginBottom: 10 },
   netRow: { flexDirection: "row", gap: 8, marginBottom: 4 },
   netBtn: { flex: 1, borderWidth: 1, borderRadius: 10, padding: 8, alignItems: "center" },
-  netBtnCircle: { width: 36, height: 36, borderRadius: 18, alignItems: "center", justifyContent: "center", marginBottom: 4 },
+  netBtnCircle: { width: 36, height: 36, borderRadius: 18, overflow: "hidden", marginBottom: 4 },
+  netBtnImg: { width: "100%", height: "100%" },
   netBtnLabel: { fontSize: 11, fontFamily: "Inter_500Medium" },
   planTabRow: { flexDirection: "row", borderBottomWidth: 1, marginBottom: 0 },
   planTab: { flex: 1, paddingVertical: 12, alignItems: "center" },
