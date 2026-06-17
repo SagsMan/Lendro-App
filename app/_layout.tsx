@@ -52,18 +52,18 @@ function RootLayoutNav() {
 }
 
 function FontLoader({ children }: { children: React.ReactNode }) {
-  const [fontsLoaded, fontError] = useFonts({
+  useFonts({
     Inter_400Regular,
     Inter_500Medium,
     Inter_600SemiBold,
     Inter_700Bold,
   });
 
+  // Hide splash screen immediately; fonts apply progressively once loaded
   useEffect(() => {
-    if (fontsLoaded || fontError) SplashScreen.hideAsync();
-  }, [fontsLoaded, fontError]);
+    SplashScreen.hideAsync().catch(() => {});
+  }, []);
 
-  if (!fontsLoaded && !fontError) return null;
   return <>{children}</>;
 }
 
