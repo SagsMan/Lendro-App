@@ -4,6 +4,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
   Alert,
+  Image,
   Platform,
   ScrollView,
   StyleSheet,
@@ -18,10 +19,10 @@ import { useApp } from "@/context/AppContext";
 import { useColors } from "@/hooks/useColors";
 
 const NETWORKS = [
-  { id: "airtel", label: "Airtel", color: "#E30000", abbr: "A", textColor: "#FFFFFF" },
-  { id: "mtn", label: "MTN", color: "#FFCC00", abbr: "M", textColor: "#1A1A2E" },
-  { id: "glo", label: "GLO", color: "#00B140", abbr: "G", textColor: "#FFFFFF" },
-  { id: "9mobile", label: "9mobile", color: "#006633", abbr: "9", textColor: "#FFFFFF" },
+  { id: "airtel", label: "Airtel", color: "#E30000", logo: require("@/assets/images/logos/airtel.png") },
+  { id: "mtn", label: "MTN", color: "#FFCC00", logo: require("@/assets/images/logos/mtn.png") },
+  { id: "glo", label: "GLO", color: "#00B140", logo: require("@/assets/images/logos/glo.png") },
+  { id: "9mobile", label: "9mobile", color: "#006633", logo: require("@/assets/images/logos/9mobile.png") },
 ];
 
 const QUICK_AMOUNTS = [50, 100, 200, 500, 1000, 2000, 5000];
@@ -101,12 +102,12 @@ export default function AirtimeScreen() {
               style={[
                 styles.networkBtn,
                 { borderColor: selectedNetwork === n.id ? n.color : colors.border },
-                selectedNetwork === n.id && { borderWidth: 2 },
+                selectedNetwork === n.id && { borderWidth: 2, backgroundColor: n.color + "12" },
               ]}
               onPress={() => { setSelectedNetwork(n.id); Haptics.selectionAsync(); }}
             >
-              <View style={[styles.netCircle, { backgroundColor: n.color }]}>
-                <Text style={[styles.netAbbr, { color: n.textColor }]}>{n.abbr}</Text>
+              <View style={styles.netLogoCircle}>
+                <Image source={n.logo} style={styles.netLogoImg} resizeMode="cover" />
               </View>
               <Text style={[styles.netLabel, { color: colors.foreground }]}>{n.label}</Text>
             </TouchableOpacity>
@@ -116,8 +117,8 @@ export default function AirtimeScreen() {
         {/* Phone Input */}
         <Text style={[styles.label, { color: colors.foreground }]}>Phone Number</Text>
         <View style={[styles.phoneWrap, { borderColor: colors.border, backgroundColor: colors.card }]}>
-          <View style={[styles.netTag, { backgroundColor: net.color }]}>
-            <Text style={[styles.netTagText, { color: net.textColor }]}>{net.abbr}</Text>
+          <View style={styles.netTagLogo}>
+            <Image source={net.logo} style={styles.netTagImg} resizeMode="cover" />
           </View>
           <TextInput
             style={[styles.phoneInput, { color: colors.foreground }]}
@@ -196,12 +197,12 @@ const styles = StyleSheet.create({
   label: { fontSize: 14, fontFamily: "Inter_500Medium", marginBottom: 10 },
   networksRow: { flexDirection: "row", gap: 10, marginBottom: 20 },
   networkBtn: { flex: 1, borderWidth: 1, borderRadius: 12, padding: 10, alignItems: "center" },
-  netCircle: { width: 40, height: 40, borderRadius: 20, alignItems: "center", justifyContent: "center", marginBottom: 6 },
-  netAbbr: { fontSize: 18, fontFamily: "Inter_700Bold" },
+  netLogoCircle: { width: 44, height: 44, borderRadius: 22, overflow: "hidden", marginBottom: 6, borderWidth: 1, borderColor: "#E5E7EB" },
+  netLogoImg: { width: "100%", height: "100%" },
   netLabel: { fontSize: 12, fontFamily: "Inter_500Medium" },
-  phoneWrap: { flexDirection: "row", alignItems: "center", borderWidth: 1.5, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 14, marginBottom: 20, gap: 12 },
-  netTag: { width: 32, height: 32, borderRadius: 16, alignItems: "center", justifyContent: "center" },
-  netTagText: { fontSize: 14, fontFamily: "Inter_700Bold" },
+  phoneWrap: { flexDirection: "row", alignItems: "center", borderWidth: 1.5, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 12, marginBottom: 20, gap: 12 },
+  netTagLogo: { width: 34, height: 34, borderRadius: 17, overflow: "hidden", borderWidth: 1, borderColor: "#E5E7EB" },
+  netTagImg: { width: "100%", height: "100%" },
   phoneInput: { flex: 1, fontSize: 16, fontFamily: "Inter_500Medium" },
   inputWrap: { flexDirection: "row", alignItems: "center", borderWidth: 1.5, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 14, marginBottom: 16, gap: 8 },
   nairaSign: { fontSize: 20, fontFamily: "Inter_600SemiBold" },
