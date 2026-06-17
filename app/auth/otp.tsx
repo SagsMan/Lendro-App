@@ -74,16 +74,7 @@ export default function OtpScreen() {
     if (finalCode.length < OTP_LENGTH) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     setLoading(true);
-    try {
-      const res = await ApiService.verifyOtp(contact ?? "", finalCode);
-      ApiService.setAuthToken(res.token);
-      app.login(contact ?? "", res.user?.name ?? "User");
-      setLoading(false);
-      router.replace("/(tabs)" as any);
-      return;
-    } catch {
-      // Server unreachable — fall back to demo mode (any 6-digit code accepted)
-    }
+    // OTP screen is demo-only — the real auth uses login.tsx (email+password)
     await new Promise((r) => setTimeout(r, 800));
     setLoading(false);
     app.login(contact ?? "");
@@ -97,9 +88,7 @@ export default function OtpScreen() {
     setCanResend(false);
     refs.current[0]?.focus();
     setActiveIndex(0);
-    try {
-      await ApiService.sendOtp(contact ?? "", (mode as "phone" | "email") ?? "phone");
-    } catch { /* demo mode */ }
+    try { /* resend placeholder */ } catch { /* demo mode */ }
     const timer = setInterval(() => {
       setCountdown((c) => {
         if (c <= 1) { setCanResend(true); clearInterval(timer); return 0; }
