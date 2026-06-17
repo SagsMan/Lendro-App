@@ -88,16 +88,18 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   // Load persisted state + API token on mount
   useEffect(() => {
     (async () => {
-      const raw = await AsyncStorage.getItem(STORAGE_KEY);
-      if (raw) {
-        try {
-          const saved = JSON.parse(raw);
-          setState({ ...defaultState, ...saved });
-        } catch { /* ignore corrupt state */ }
-      }
-      // Restore API token if present
-      await Api.loadStoredToken();
-      setLoaded(true);
+      try {
+        const raw = await AsyncStorage.getItem(STORAGE_KEY);
+        if (raw) {
+          try {
+            const saved = JSON.parse(raw);
+            setState({ ...defaultState, ...saved });
+          } catch { /* ignore corrupt state */ }
+        }
+        // Restore API token (may fail in restricted iframe envs — that's OK)
+        try { await Api.loadStoredToken(); } catch { /* no-op */ }
+      } catch { /* AsyncStorage unavailable — use defaults */ }
+      finally { setLoaded(true); }
     })();
   }, []);
 
