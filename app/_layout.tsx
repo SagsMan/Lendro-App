@@ -23,6 +23,9 @@ const queryClient = new QueryClient();
 function RootLayoutNav() {
   const app = useApp();
 
+  // Wait for AsyncStorage to rehydrate before routing
+  if (!app.loaded) return null;
+
   // Route guard: onboarding → login → main tabs
   if (!app.hasSeenOnboarding) {
     return <Redirect href="/onboarding" />;
