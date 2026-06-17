@@ -1,0 +1,27 @@
+kind = "mobile"
+previewPath = "/"
+title = "Lendro App"
+version = "1.0.0"
+id = "artifacts/lendro-app"
+router = "expo-domain"
+
+[[integratedSkills]]
+name = "expo"
+version = "1.0.0"
+
+[[services]]
+ensurePreviewReachable = "/status"
+name = "expo"
+paths = [ "/" ]
+localPort = 23104
+
+[services.development]
+run = "pnpm --filter @workspace/lendro-app run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/lendro-app", "run", "build" ]
+run = [ "pnpm", "--filter", "@workspace/lendro-app", "run", "serve" ]
+
+[services.env]
+PORT = "23104"
+BASE_PATH = "/"
