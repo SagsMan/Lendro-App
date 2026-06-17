@@ -31,6 +31,7 @@ const TYPE_ICON: Record<Transaction["type"], { name: string; color: string; bg: 
   cable: { name: "tv", color: "#8B5CF6", bg: "#F5F3FF" },
   deposit: { name: "wallet", color: "#10B981", bg: "#ECFDF5" },
   funding: { name: "trending-up", color: "#2D1B8E", bg: "#EDE9FF" },
+  exam: { name: "school", color: "#0EA5E9", bg: "#F0F9FF" },
   more: { name: "grid", color: "#6B7280", bg: "#F3F4F6" },
 };
 
