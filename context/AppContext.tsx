@@ -9,7 +9,7 @@ import React, {
 
 export interface Transaction {
   id: string;
-  type: "airtime" | "data" | "electricity" | "cable" | "deposit" | "funding";
+  type: "airtime" | "data" | "electricity" | "cable" | "deposit" | "funding" | "more";
   description: string;
   amount: number;
   status: "success" | "pending" | "failed";
@@ -29,6 +29,9 @@ interface AppState {
   repaymentScore: number;
   transactions: Transaction[];
   username: string;
+  phone: string;
+  isAuthenticated: boolean;
+  hasSeenOnboarding: boolean;
 }
 
 interface AppContextValue extends AppState {
@@ -36,6 +39,10 @@ interface AppContextValue extends AppState {
   creditWallet: (amount: number) => void;
   addTransaction: (tx: Omit<Transaction, "id" | "date">) => void;
   refreshData: () => void;
+  login: (phone: string, name?: string) => void;
+  logout: () => void;
+  completeOnboarding: () => void;
+  retryTransaction: (id: string) => void;
 }
 
 const defaultState: AppState = {
@@ -58,6 +65,9 @@ const defaultState: AppState = {
     },
   ],
   username: "Olatunde",
+  phone: "",
+  isAuthenticated: false,
+  hasSeenOnboarding: false,
 };
 
 export const AppContext = createContext<AppContextValue>({
@@ -66,22 +76,29 @@ export const AppContext = createContext<AppContextValue>({
   creditWallet: () => {},
   addTransaction: () => {},
   refreshData: () => {},
+  login: () => {},
+  logout: () => {},
+  completeOnboarding: () => {},
+  retryTransaction: () => {},
 });
 
 const STORAGE_KEY = "@lendro_app_state";
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<AppState>(defaultState);
+  const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
     AsyncStorage.getItem(STORAGE_KEY).then((raw) => {
       if (raw) {
         try {
-          setState(JSON.parse(raw));
+          const saved = JSON.parse(raw);
+          setState({ ...defaultState, ...saved });
         } catch {
           // ignore
         }
       }
+      setLoaded(true);
     });
   }, []);
 
@@ -140,7 +157,65 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     [persist]
   );
 
+  const login = useCallback(
+    (phone: string, name = "User") => {
+      setState((prev) => {
+        const next = { ...prev, isAuthenticated: true, phone, username: name };
+        persist(next);
+        return next;
+      });
+    },
+    [persist]
+  );
+
+  const logout = useCallback(() => {
+    setState((prev) => {
+      const next = { ...prev, isAuthenticated: false, phone: "" };
+      persist(next);
+      return next;
+    });
+  }, [persist]);
+
+  const completeOnboarding = useCallback(() => {
+    setState((prev) => {
+      const next = { ...prev, hasSeenOnboarding: true };
+      persist(next);
+      return next;
+    });
+  }, [persist]);
+
+  const retryTransaction = useCallback(
+    (id: string) => {
+      setState((prev) => {
+        const next = {
+          ...prev,
+          transactions: prev.transactions.map((tx) =>
+            tx.id === id ? { ...tx, status: "pending" as const } : tx
+          ),
+        };
+        persist(next);
+        // Simulate retry after 2s
+        setTimeout(() => {
+          setState((p) => {
+            const updated = {
+              ...p,
+              transactions: p.transactions.map((tx) =>
+                tx.id === id ? { ...tx, status: "success" as const } : tx
+              ),
+            };
+            persist(updated);
+            return updated;
+          });
+        }, 2000);
+        return next;
+      });
+    },
+    [persist]
+  );
+
   const refreshData = useCallback(() => {}, []);
+
+  if (!loaded) return null;
 
   return (
     <AppContext.Provider
@@ -150,6 +225,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         creditWallet,
         addTransaction,
         refreshData,
+        login,
+        logout,
+        completeOnboarding,
+        retryTransaction,
       }}
     >
       {children}
