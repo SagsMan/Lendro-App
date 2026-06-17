@@ -1,45 +1,48 @@
 {
-  "expo": {
-    "name": "Lendro",
-    "slug": "lendro-app",
-    "version": "1.0.0",
-    "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
-    "scheme": "lendro-app",
-    "userInterfaceStyle": "light",
-    "newArchEnabled": true,
-    "splash": {
-      "image": "./assets/images/icon.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#2D1B8E"
-    },
-    "ios": {
-      "supportsTablet": false,
-      "bundleIdentifier": "com.lendro.app"
-    },
-    "android": {
-      "adaptiveIcon": {
-        "foregroundImage": "./assets/images/icon.png",
+    "expo": {
+      "name": "Lendro",
+      "slug": "lendro-app",
+      "version": "1.0.0",
+      "orientation": "portrait",
+      "icon": "./assets/images/icon.png",
+      "scheme": "lendro-app",
+      "userInterfaceStyle": "light",
+      "newArchEnabled": true,
+      "jsEngine": "hermes",
+      "splash": {
+        "image": "./assets/images/icon.png",
+        "resizeMode": "contain",
         "backgroundColor": "#2D1B8E"
       },
-      "package": "com.lendro.app"
-    },
-    "web": {
-      "favicon": "./assets/images/icon.png"
-    },
-    "plugins": [
-      [
-        "expo-router",
-        {
-          "origin": "https://replit.com/"
-        }
+      "ios": {
+        "supportsTablet": false,
+        "bundleIdentifier": "com.lendro.app",
+        "jsEngine": "hermes"
+      },
+      "android": {
+        "adaptiveIcon": {
+          "foregroundImage": "./assets/images/icon.png",
+          "backgroundColor": "#2D1B8E"
+        },
+        "package": "com.lendro.app",
+        "jsEngine": "hermes"
+      },
+      "web": {
+        "favicon": "./assets/images/icon.png"
+      },
+      "plugins": [
+        [
+          "expo-router",
+          {
+            "origin": "https://replit.com/"
+          }
+        ],
+        "expo-font",
+        "expo-web-browser"
       ],
-      "expo-font",
-      "expo-web-browser"
-    ],
-    "experiments": {
-      "typedRoutes": true,
-      "reactCompiler": true
+      "experiments": {
+        "typedRoutes": true
+      }
     }
   }
-}
+  
