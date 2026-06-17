@@ -1,9 +1,10 @@
-import { Feather, Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
+import { Feather, Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import React from "react";
 import {
+  Image,
   Platform,
   ScrollView,
   StyleSheet,
@@ -17,23 +18,41 @@ import { useApp } from "@/context/AppContext";
 import { useColors } from "@/hooks/useColors";
 
 const NETWORKS = [
-  { id: "airtel", label: "Airtel\nAirtime", bg: "#E30000", text: "#FFFFFF", abbr: "A", route: "/services/airtime?network=airtel" },
-  { id: "mtn", label: "MTN\nAirtime", bg: "#FFCC00", text: "#1A1A2E", abbr: "M", route: "/services/airtime?network=mtn" },
-  { id: "glo", label: "GLO\nAirtime", bg: "#00B140", text: "#FFFFFF", abbr: "G", route: "/services/airtime?network=glo" },
-  { id: "9mobile", label: "9mobile\nAirtime", bg: "#006633", text: "#FFFFFF", abbr: "9", route: "/services/airtime?network=9mobile" },
+  {
+    id: "airtel", label: "Airtel\nAirtime",
+    logo: require("@/assets/images/logos/airtel.png"),
+    route: "/services/airtime?network=airtel",
+  },
+  {
+    id: "mtn", label: "MTN\nAirtime",
+    logo: require("@/assets/images/logos/mtn.png"),
+    route: "/services/airtime?network=mtn",
+  },
+  {
+    id: "glo", label: "GLO\nAirtime",
+    logo: require("@/assets/images/logos/glo.png"),
+    route: "/services/airtime?network=glo",
+  },
+  {
+    id: "9mobile", label: "9mobile\nAirtime",
+    logo: require("@/assets/images/logos/9mobile.png"),
+    route: "/services/airtime?network=9mobile",
+  },
 ];
 
 const SERVICES = [
-  { id: "data", label: "Data", icon: "wifi", iconSet: "feather", color: "#3B82F6", bg: "#EFF6FF", route: "/services/data" },
-  { id: "cable", label: "Cable TV", icon: "tv", iconSet: "feather", color: "#8B5CF6", bg: "#F5F3FF", route: "/services/cable" },
-  { id: "electricity", label: "Electricity", icon: "zap", iconSet: "feather", color: "#F59E0B", bg: "#FFFBEB", route: "/services/electricity" },
-  { id: "more", label: "More", icon: "more-horizontal", iconSet: "feather", color: "#6B7280", bg: "#F3F4F6", route: "/services/more" },
+  { id: "data", label: "Data", icon: "wifi", color: "#3B82F6", bg: "#EFF6FF", route: "/services/data" },
+  { id: "cable", label: "Cable TV", icon: "tv", color: "#8B5CF6", bg: "#F5F3FF", route: "/services/cable" },
+  { id: "electricity", label: "Electricity", icon: "zap", color: "#F59E0B", bg: "#FFFBEB", route: "/services/electricity" },
+  { id: "more", label: "More", icon: "more-horizontal", color: "#6B7280", bg: "#F3F4F6", route: "/services/more" },
 ];
 
 const LEADERBOARD = [
   { rank: 1, name: "You", pts: 240, isUser: true },
   { rank: 2, name: "Chukwu E.", pts: 210, isUser: false },
   { rank: 3, name: "Amaka O.", pts: 185, isUser: false },
+  { rank: 4, name: "Tunde B.", pts: 172, isUser: false },
+  { rank: 5, name: "Ngozi K.", pts: 165, isUser: false },
 ];
 
 function formatNaira(amount: number) {
@@ -70,8 +89,8 @@ export default function HomeScreen() {
         <View style={styles.headerRow}>
           <Text style={styles.logoText}>LENDRO</Text>
           <View style={styles.headerIcons}>
-            <TouchableOpacity style={styles.iconBtn} onPress={() => {}}>
-              <Feather name="credit-card" size={22} color="#FFFFFF" />
+            <TouchableOpacity style={styles.iconBtn} onPress={() => router.push("/transactions" as any)}>
+              <Feather name="clock" size={22} color="#FFFFFF" />
             </TouchableOpacity>
             <TouchableOpacity style={styles.iconBtn} onPress={() => {}}>
               <View>
@@ -82,6 +101,7 @@ export default function HomeScreen() {
           </View>
         </View>
 
+        <Text style={styles.greet}>Hello, {app.username} 👋</Text>
         <Text style={styles.fundingLabel}>Support Funding Limit</Text>
         <Text style={styles.fundingAmount}>{formatNaira(app.supportFundingLimit)}</Text>
 
@@ -133,6 +153,8 @@ export default function HomeScreen() {
           <Text style={[styles.sectionSub, { color: colors.mutedForeground }]}>
             Use partner services to earn usage points.
           </Text>
+
+          {/* Telecom logos row */}
           <View style={styles.serviceGrid}>
             {NETWORKS.map((n) => (
               <TouchableOpacity
@@ -141,13 +163,15 @@ export default function HomeScreen() {
                 onPress={() => handleService(n.route)}
                 activeOpacity={0.7}
               >
-                <View style={[styles.networkCircle, { backgroundColor: n.bg }]}>
-                  <Text style={[styles.networkAbbr, { color: n.text }]}>{n.abbr}</Text>
+                <View style={styles.logoCircle}>
+                  <Image source={n.logo} style={styles.logoImg} resizeMode="cover" />
                 </View>
                 <Text style={[styles.serviceLabel, { color: colors.mutedForeground }]}>{n.label}</Text>
               </TouchableOpacity>
             ))}
           </View>
+
+          {/* Utility services row */}
           <View style={styles.serviceGrid}>
             {SERVICES.map((s) => (
               <TouchableOpacity
@@ -245,7 +269,9 @@ export default function HomeScreen() {
                 entry.isUser && { backgroundColor: colors.purpleLight },
               ]}
             >
-              <Text style={[styles.leaderRank, { color: colors.mutedForeground }]}>{entry.rank}</Text>
+              <Text style={[styles.leaderRank, { color: entry.rank <= 3 ? "#F5A623" : colors.mutedForeground }]}>
+                {entry.rank <= 3 ? ["🥇","🥈","🥉"][entry.rank - 1] : `#${entry.rank}`}
+              </Text>
               <View style={[styles.leaderAvatar, { backgroundColor: entry.isUser ? colors.accent : colors.muted }]}>
                 <Ionicons name="person" size={16} color={entry.isUser ? "#fff" : colors.mutedForeground} />
               </View>
@@ -253,6 +279,17 @@ export default function HomeScreen() {
               <Text style={[styles.leaderPts, { color: colors.primary }]}>{entry.pts}pts</Text>
             </View>
           ))}
+
+          {/* Transactions shortcut */}
+          <TouchableOpacity
+            style={styles.viewTxBtn}
+            onPress={() => router.push("/transactions" as any)}
+            activeOpacity={0.8}
+          >
+            <Ionicons name="receipt-outline" size={16} color="#2D1B8E" />
+            <Text style={styles.viewTxText}>View All Transactions</Text>
+            <Ionicons name="arrow-forward" size={14} color="#2D1B8E" />
+          </TouchableOpacity>
         </View>
       </ScrollView>
     </View>
@@ -262,11 +299,12 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   root: { flex: 1 },
   header: { paddingHorizontal: 20, paddingBottom: 24 },
-  headerRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 20 },
+  headerRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 8 },
   logoText: { fontSize: 24, fontFamily: "Inter_700Bold", color: "#F5A623", letterSpacing: 2 },
   headerIcons: { flexDirection: "row", gap: 12 },
   iconBtn: { padding: 4 },
   badge: { position: "absolute", top: -2, right: -2, width: 8, height: 8, borderRadius: 4, backgroundColor: "#EF4444" },
+  greet: { fontSize: 13, color: "rgba(255,255,255,0.75)", fontFamily: "Inter_500Medium", marginBottom: 10 },
   fundingLabel: { fontSize: 13, color: "rgba(255,255,255,0.7)", fontFamily: "Inter_400Regular", marginBottom: 4 },
   fundingAmount: { fontSize: 36, color: "#FFFFFF", fontFamily: "Inter_700Bold", marginBottom: 16 },
   statsGrid: { flexDirection: "row", flexWrap: "wrap", marginBottom: 20 },
@@ -275,32 +313,28 @@ const styles = StyleSheet.create({
   statValue: { fontSize: 16, color: "#FFFFFF", fontFamily: "Inter_600SemiBold", marginTop: 2 },
   ctaRow: { flexDirection: "row", gap: 12 },
   depositBtn: {
-    flex: 1,
-    borderWidth: 1.5,
-    borderColor: "#FFFFFF",
-    borderRadius: 24,
-    paddingVertical: 12,
-    alignItems: "center",
+    flex: 1, borderWidth: 1.5, borderColor: "#FFFFFF", borderRadius: 24,
+    paddingVertical: 12, alignItems: "center",
   },
   depositBtnText: { color: "#FFFFFF", fontFamily: "Inter_600SemiBold", fontSize: 14 },
   requestBtn: {
-    flex: 1,
-    backgroundColor: "#F5A623",
-    borderRadius: 24,
-    paddingVertical: 12,
-    alignItems: "center",
+    flex: 1, backgroundColor: "#F5A623", borderRadius: 24,
+    paddingVertical: 12, alignItems: "center",
   },
   requestBtnText: { color: "#1A1A2E", fontFamily: "Inter_600SemiBold", fontSize: 14 },
   scroll: { flex: 1 },
-  section: { marginHorizontal: 0, paddingHorizontal: 16, paddingVertical: 20, marginBottom: 4 },
+  section: { paddingHorizontal: 16, paddingVertical: 20, marginBottom: 4 },
   sectionHeaderRow: { flexDirection: "row", alignItems: "center", marginBottom: 12 },
   sectionTitle: { fontSize: 16, fontFamily: "Inter_700Bold" },
   sectionSub: { fontSize: 12, fontFamily: "Inter_400Regular", marginBottom: 16, marginTop: -4 },
   serviceGrid: { flexDirection: "row", justifyContent: "space-between", marginBottom: 8 },
   serviceItem: { alignItems: "center", width: "23%" },
-  networkCircle: { width: 52, height: 52, borderRadius: 26, alignItems: "center", justifyContent: "center", marginBottom: 6 },
-  networkAbbr: { fontSize: 22, fontFamily: "Inter_700Bold" },
-  serviceCircle: { width: 52, height: 52, borderRadius: 26, alignItems: "center", justifyContent: "center", marginBottom: 6 },
+  logoCircle: {
+    width: 56, height: 56, borderRadius: 28, overflow: "hidden",
+    marginBottom: 6, borderWidth: 1, borderColor: "#E5E7EB",
+  },
+  logoImg: { width: "100%", height: "100%" },
+  serviceCircle: { width: 56, height: 56, borderRadius: 28, alignItems: "center", justifyContent: "center", marginBottom: 6 },
   serviceLabel: { fontSize: 11, fontFamily: "Inter_400Regular", textAlign: "center" },
   scoreRow: { marginBottom: 14 },
   scoreLabelRow: { flexDirection: "row", justifyContent: "space-between", marginBottom: 6 },
@@ -322,8 +356,14 @@ const styles = StyleSheet.create({
   whyLink: { color: "#F5A623", fontFamily: "Inter_500Medium" },
   leaderSub: { fontSize: 12, fontFamily: "Inter_400Regular", marginBottom: 14, lineHeight: 18 },
   leaderRow: { flexDirection: "row", alignItems: "center", paddingVertical: 12, paddingHorizontal: 12, borderRadius: 10, marginBottom: 6 },
-  leaderRank: { width: 24, fontSize: 14, fontFamily: "Inter_600SemiBold" },
+  leaderRank: { width: 28, fontSize: 14, fontFamily: "Inter_600SemiBold" },
   leaderAvatar: { width: 32, height: 32, borderRadius: 16, alignItems: "center", justifyContent: "center", marginRight: 10 },
   leaderName: { flex: 1, fontSize: 14, fontFamily: "Inter_500Medium" },
   leaderPts: { fontSize: 14, fontFamily: "Inter_700Bold" },
+  viewTxBtn: {
+    flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8,
+    marginTop: 12, paddingVertical: 12, borderRadius: 12,
+    backgroundColor: "#EDE9FF", borderWidth: 1, borderColor: "#DDD5FF",
+  },
+  viewTxText: { fontSize: 14, fontFamily: "Inter_600SemiBold", color: "#2D1B8E" },
 });
