@@ -68,7 +68,8 @@ import { Feather, Ionicons } from "@expo/vector-icons";
         router.replace("/(tabs)" as any);
       } catch (err: any) {
         setLoading(false);
-        if (err.message?.includes("fetch") || err.message?.includes("network") || err.message?.includes("Failed")) {
+        const msg = (err.message ?? "").toLowerCase();
+        if (msg.includes("network") || msg.includes("fetch") || msg.includes("failed") || msg.includes("ssl") || msg.includes("certificate")) {
           app.login(email, siEmail.split("@")[0]);
           router.replace("/(tabs)" as any);
         } else {
@@ -105,7 +106,8 @@ import { Feather, Ionicons } from "@expo/vector-icons";
         }
       } catch (err: any) {
         setLoading(false);
-        if (err.message?.includes("fetch") || err.message?.includes("network") || err.message?.includes("Failed")) {
+        const msg = (err.message ?? "").toLowerCase();
+        if (msg.includes("network") || msg.includes("fetch") || msg.includes("failed") || msg.includes("ssl") || msg.includes("certificate")) {
           app.login(phone, name);
           router.replace("/(tabs)" as any);
         } else {
