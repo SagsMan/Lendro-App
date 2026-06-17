@@ -4,6 +4,7 @@ import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
   Alert,
+  Image,
   Platform,
   ScrollView,
   StyleSheet,
@@ -18,10 +19,10 @@ import { useApp } from "@/context/AppContext";
 import { useColors } from "@/hooks/useColors";
 
 const PROVIDERS = [
-  { id: "dstv", label: "DSTV", color: "#0066FF", abbr: "D" },
-  { id: "gotv", label: "GOtv", color: "#FF6600", abbr: "G" },
-  { id: "startimes", label: "StarTimes", color: "#CC0000", abbr: "S" },
-  { id: "showmax", label: "Showmax", color: "#1A1A2E", abbr: "X" },
+  { id: "dstv", label: "DSTV", color: "#003087", logo: require("@/assets/images/logos/dstv.png") },
+  { id: "gotv", label: "GOtv", color: "#F7941D", logo: require("@/assets/images/logos/gotv.png") },
+  { id: "startimes", label: "StarTimes", color: "#C8102E", logo: require("@/assets/images/logos/startimes.png") },
+  { id: "showmax", label: "Showmax", color: "#E50000", logo: require("@/assets/images/logos/showmax.png") },
 ];
 
 const PLANS: Record<string, Array<{ id: string; name: string; price: number; duration: string; channels: string }>> = {
@@ -106,11 +107,11 @@ export default function CableScreen() {
           {PROVIDERS.map((p) => (
             <TouchableOpacity
               key={p.id}
-              style={[styles.provBtn, { borderColor: provider === p.id ? p.color : colors.border }, provider === p.id && { borderWidth: 2 }]}
+              style={[styles.provBtn, { borderColor: provider === p.id ? p.color : colors.border }, provider === p.id && { borderWidth: 2, backgroundColor: p.color + "12" }]}
               onPress={() => { setProvider(p.id); setSelected(null); Haptics.selectionAsync(); }}
             >
-              <View style={[styles.provCircle, { backgroundColor: p.color }]}>
-                <Text style={styles.provAbbr}>{p.abbr}</Text>
+              <View style={styles.provLogoCircle}>
+                <Image source={p.logo} style={styles.provLogoImg} resizeMode="cover" />
               </View>
               <Text style={[styles.provLabel, { color: colors.foreground }]}>{p.label}</Text>
             </TouchableOpacity>
@@ -184,8 +185,8 @@ const styles = StyleSheet.create({
   label: { fontSize: 14, fontFamily: "Inter_500Medium", marginBottom: 10 },
   providerRow: { flexDirection: "row", gap: 10, marginBottom: 20 },
   provBtn: { flex: 1, borderWidth: 1, borderRadius: 12, padding: 10, alignItems: "center" },
-  provCircle: { width: 40, height: 40, borderRadius: 20, alignItems: "center", justifyContent: "center", marginBottom: 6 },
-  provAbbr: { fontSize: 16, fontFamily: "Inter_700Bold", color: "#FFFFFF" },
+  provLogoCircle: { width: 44, height: 44, borderRadius: 22, overflow: "hidden", marginBottom: 6, borderWidth: 1, borderColor: "#E5E7EB" },
+  provLogoImg: { width: "100%", height: "100%" },
   provLabel: { fontSize: 11, fontFamily: "Inter_500Medium" },
   inputWrap: { flexDirection: "row", alignItems: "center", gap: 12, borderWidth: 1.5, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 14, marginBottom: 20 },
   input: { flex: 1, fontSize: 16, fontFamily: "Inter_500Medium" },
