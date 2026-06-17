@@ -38,6 +38,7 @@ interface AppState {
 }
 
 interface AppContextValue extends AppState {
+  loaded: boolean;
   debitWallet: (amount: number) => boolean;
   creditWallet: (amount: number) => void;
   addTransaction: (tx: Omit<Transaction, "id" | "date">) => void;
@@ -67,6 +68,7 @@ const defaultState: AppState = {
 
 export const AppContext = createContext<AppContextValue>({
   ...defaultState,
+  loaded: false,
   debitWallet: () => false,
   creditWallet: () => {},
   addTransaction: () => {},
@@ -267,12 +269,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     [persist]
   );
 
-  if (!loaded) return null;
-
   return (
     <AppContext.Provider
       value={{
         ...state,
+        loaded,
         debitWallet,
         creditWallet,
         addTransaction,
